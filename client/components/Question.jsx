@@ -1,8 +1,7 @@
 import React from 'react';
-import OptionCard from '../OptionCard'
+import OptionCard from './OptionCard.jsx'
 import _ from 'underscore';
-
-import { Row } from 'reactstrap';
+import { Row, Container, Col } from 'reactstrap';
 
 // clicking correct answer flips card
 // timeout --> renders next question
@@ -15,27 +14,34 @@ class Question extends React.Component {
     super(props);
     this.state = {
       correct: false,
+      qData: {}
     }
-    this.shuffleCards = this.shuffleCards.bind(this);
+    // this.shuffleCards = this.shuffleCards.bind(this);
   }
 
-  shuffleCards(question) {
-    let options = Object.entries(question);
-    shuffledOptionsArray.shift();
-    return _.shuffle(options);
+  componentDidMount() {
+    this.setState({ qData: this.props.qData })
   }
+  // shuffleCards(question) {
+  //   let options = Object.entries(question);
+  //   options.shift();
+  //   return _.shuffle(options);
+  // }
 
   render() {
     return (
       <div>
-        <h1>{props.question.question}</h1>
-        <Row>
-          {this.shuffleCards(this.props.question).map(option => {
-            return
-            <OptionCard option={option} />
-          })}
-        </Row>
+        <div className="text-center"><h1>{this.props.qData.question}</h1></div>
+        <Container>
+          <Row>
+            {/* <OptionCard /> */}
+            {this.props.qData.options.map(option => <OptionCard option=
+              {option} />)}
+          </Row>
+        </Container>
       </div>
     )
   }
 }
+
+export default Question;

@@ -1,13 +1,26 @@
 const express = require('express');
-const data = require('../database');
+const http = require('http');
+const socketIo = require('socket.io');
+const axios = require('axios');
+const _ = require('underscore');
+
+const port = process.env.PORT || 3000;
 const app = express();
 const bodyParser = require('body-parser');
 
 const users = require('../routes/users');
 
 app.use(express.static(__dirname + '/../client/dist'));
-app.use(bodyParser.urlencoded({extend:false}));
+app.use(bodyParser.urlencoded({
+  extend: false
+}));
 
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// const gameFunction = require('./gamefunction.js');
+const data = require('../database');
+app.use(express.json());
 
 const passport = require('passport'),
   auth = require('./auth.js');
@@ -15,9 +28,8 @@ const passport = require('passport'),
 auth(passport);
 app.use(passport.initialize());
 app.use(bodyParser.json());
-app.use('/users',users)
+app.use('/users', users)
 
-let port = process.env.PORT || 3000;
 
 app.get('/home/leaderboard', function (req, res) {
   data.leaderboardScore(function (err, data) {
@@ -35,8 +47,10 @@ app.get('/auth/google', passport.authenticate('google', {
   scope: ['https://www.googleapis.com/auth/plus.login']
 }));
 
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login'}),
-  function(req, res) {
+app.get('/auth/google/callback', passport.authenticate('google', {
+    failureRedirect: '/login'
+  }),
+  function (req, res) {
     var googleId = req.user.profile.id;
     var displayName = req.user.profile.displayName;
 
@@ -61,6 +75,42 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
     res.redirect('/')
   });
 
-app.listen(port, () => {
-  console.log(`Listening on port: ${port}`);
-});
+var dummy = require('./mathTrivia.js').data.results;
+var parser = require('socket.io-parser');
+var encoder = new parser.Encoder();
+
+app.get('/game', function (req, res) {
+  if (req.user) {
+    res.send(req.user.profile.id)
+  } else {
+    res.redirect('/auth/login')
+  }
+})
+
+var question = dummy[0]
+question.incorrect_answers.push(question.correct_answer)
+question.incorrect_answers = _.shuffle(question.incorrect_answers);
+
+
+io.on('connection', socket => {
+  // console.log(socket.server.httpServer._connections, 'user connected')
+
+
+  let q1 = {
+    question: question.question,
+    options: question.incorrect_answers
+  }
+
+  socket.emit('q1', q1);
+
+
+
+
+  socket.on('disconnect', () => {
+    console.log('user disconeccted')
+  })
+
+
+})
+
+server.listen(port, () => console.log(`Listening on port: ${port}`))

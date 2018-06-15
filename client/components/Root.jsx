@@ -12,13 +12,13 @@ class Root extends Component {
 
   render() {
     if (this.state.redirect || sessionStorage.getItem("userData")) {
-      return <Redirect to={"/home/leaderboard"} />;
+      return <Redirect to={"/home/leaderboard/"} />;
     }
 
     return (
       <div className="rootContainer">
         <div className="loginButton">
-        <button><a href="/auth/google/">Login with Google</a></button>
+          <button><a href="/auth/google/">Login with Google</a></button>
           <img src={"https://cdn130.picsart.com/238899884057212.png?r1024x1024"} />
         </div>
         <div className="dino-view">

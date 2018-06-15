@@ -2,13 +2,15 @@ import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import $ from "jquery";
 import Dinosaur from "../database/exampleData.js";
+import 'bootstrap/dist/css/bootstrap.css';
+
+
 import QuizListComponent from "./components/QuizListComponent.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
-
 import Root from "./components/Root.jsx";
 import QuizSelected from "./components/QuizSelected.jsx";
 import UserData from "./UserExampleData";
-// import 'bootstrap/dist/css/bootstrap.min.css';
+import Game from './components/Game.jsx';
 
 class App extends React.Component {
   constructor(props) {
@@ -22,6 +24,10 @@ class App extends React.Component {
     this.viewUpdate = this.viewUpdate.bind(this);
   }
 
+  componentDidMount() {
+    this.quizFetch();
+  }
+
   //change the view of our website
   viewUpdate(newView) {
     this.setState({
@@ -29,9 +35,6 @@ class App extends React.Component {
     });
   }
 
-  componentDidMount() {
-    this.quizFetch();
-  }
 
   //ajax fetch our list of quizzes from the server
   ajaxQuizFetch(cb) {
@@ -73,12 +76,15 @@ class App extends React.Component {
       return <QuizSelected questionsData={Dinosaur.quizzes} />;
     } else if (this.state.view === "leaderboard") {
       return <Leaderboard data={UserData} />;
+    } else if (this.state.view === "game") {
+      return <Game />
     }
   }
 
   //render our nav bar
   render() {
     return (
+      <div>
         <div className="nav">
           <ul>
             <li className="logo">Quiz o' Saurus</li>
@@ -98,11 +104,18 @@ class App extends React.Component {
             >
               <a>Leaderboard</a>
             </li>
+            <li
+              className="nav-ui"
+              onClick={() => {
+                this.viewUpdate("game");
+              }}
+            >
+              <a>Game</a>
+            </li>
           </ul>
-          <div>
-            <div className="pageRender">{this.currentPage()}</div>
-          </div>
         </div>
+        {this.currentPage()}
+      </div>
     );
   }
 }
