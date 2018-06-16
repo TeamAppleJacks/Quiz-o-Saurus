@@ -1,3 +1,7 @@
+body {
+  background-image: url("dino.jpg");
+  opacity: 0.8;
+}
 
 
 a {
@@ -82,7 +86,6 @@ ul {
   text-align: center;
   margin-top: 50px;
   margin-bottom: 50px;
-  width: 40%;
   border: 1px solid #77777769;
   background-color: #fdfdfd;
   border-radius: 4px;
@@ -119,15 +122,73 @@ ul {
 
 /*quiz catalog*/
 
+.quiz-list-cont {
+  border-radius: 15px;
+  background-color: rgba(52, 52, 52, 0.7);
+  padding-bottom: 100px;
+  padding-top: 100px;
+  margin-top: 90px;
+  margin-left:400px;
+  margin-right:400px;
+  color: white;
+}
+
+
 .quiz-list-container {
-  margin-top: 70px;
-  display: flex;
-  justify-content: space-evenly;
+  border-radius: 15px;
+  background-color: rgba(52, 52, 52, 0.7);
+  padding-bottom: 100px;
+  margin-top: 90px;
+  margin-left:400px;
+  margin-right:400px;
+  color: white;
 }
 
 .quiz-list-display {
-  border: 1px solid black;
-  margin: 5px;
+  color: white;
+  padding-bottom: 50px;
+  padding-top: 50px;
+}
+
+.quiz-question-display {
+  color: white;
+  padding-bottom: 50px;
+  padding-top: 50px;
+  vertical-align: middle;
+}
+
+.option-display:hover {
+  background-color: blue;
+}
+
+.option-focus:focus {
+  background-color: yellow;
+}
+
+.quiz-options-display {
+  padding: 15px 15px 15px 15px;
+  background-color: darkgrey;
+  margin-right: 40px;
+  margin-left: 40px;
+  vertical-align: middle;
+  text-align: center;
+  color: white;
+  border-radius: 5px;
+  
+}
+
+.quiz-button-display {
+  margin-top: 50px;
+  padding: 3px 8px 3px 3px;
+  border: none;
+  background-color: rgba(52, 52, 52, 0.3);
+  box-shadow: 5px 5px 5px grey;
+  border-radius: 5px;
+  color: white;
+}
+
+.click-press:active {
+  transform: translateY(4px);
 }
 
 /*specific quiz questionaire mode*/
@@ -172,12 +233,13 @@ ul {
   height: 600px;
 }
 
-.dino-view{
+.dino-view {
   display: block;
-  margin-top:100px;
-  font-family:  Butterfly Kids;
+  margin-top: 100px;
+  font-family: Butterfly Kids;
   font-size: 80px;
 }
+
 .pageRender {
   text-align: center;
 }
