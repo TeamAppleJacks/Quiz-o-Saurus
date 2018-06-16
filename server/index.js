@@ -1,60 +1,56 @@
-//starting up express onto server
 const express = require('express');
-const bodyParser = require('body-parser'); //parses incoming req
-const data = require('../database');
+const http = require('http');
+const socketIo = require('socket.io');
+const axios = require('axios');
+const _ = require('underscore');
+
+const port = process.env.PORT || 3000;
 const app = express();
+const bodyParser = require('body-parser');
 
-//import google oauth passport package 
-const passport = require('passport'),
-      auth = require('./auth.js'); 
-
-//import cookie package
-const cookieParser = require('cookie-parser'),
-    cookieSession = require('cookie-session');
-
+const users = require('../routes/users');
 
 app.use(express.static(__dirname + '/../client/dist'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+  extend: false
+}));
+
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// const gameFunction = require('./gamefunction.js');
+const data = require('../database');
+app.use(express.json());
+
+const passport = require('passport'),
+  auth = require('./auth.js');
 
 auth(passport);
 app.use(passport.initialize());
+app.use(bodyParser.json());
+app.use('/users', users)
 
-let port = process.env.PORT || 3000;
 
-//------------google oauth------------//
-//redirects client to google login page
-app.get('/', (req, res) => {
-  if (req.session.token) { //if token exists
-    res.cookie('token', req.session.token); //set cookie
-    res.json({
-        status: 'session cookie set'
-    });
-  } else {
-    res.cookie('token', '') //cookie is not set
-    res.json({
-        status: 'session cookie not set'
-    });
-  }
+app.get('/home/leaderboard', function (req, res) {
+  data.leaderboardScore(function (err, data) {
+    if (err) {
+      console.log('not working')
+      res.sendStatus(500);
+    } else {
+      console.log('get request is going through yay!')
+      res.send(data);
+    }
+  });
 });
 
-//redirects client to google login page
 app.get('/auth/google', passport.authenticate('google', {
-    scope: ['https://www.googleapis.com/auth/userinfo.profile']
+  scope: ['https://www.googleapis.com/auth/plus.login']
 }));
 
-//keep key secret so cookie can't b stolen by 3rd parties
-app.use(cookieSession({name: 'session', keys: ['810']}));
-app.use(cookieParser());
-
-//after google verifyes from func line 50, this func gets invoked immediately
-app.get('/auth/google',
-  passport.authenticate('google', {failureRedirect: '/'}),
-  (req, res) => {
-    console.log('redirect')
-    req.session.token = req.user.token; //cookie?
-    res.redirect('/'); //takes client to '/' (homepage)
-
+app.get('/auth/google/callback', passport.authenticate('google', {
+    failureRedirect: '/login'
+  }),
+  function (req, res) {
     var googleId = req.user.profile.id;
     var displayName = req.user.profile.displayName;
 
@@ -75,75 +71,46 @@ app.get('/auth/google',
         console.log(`it already here hunni`);
       }
     });
+
+    res.redirect('/')
+  });
+
+var dummy = require('./mathTrivia.js').data.results;
+var parser = require('socket.io-parser');
+var encoder = new parser.Encoder();
+
+app.get('/game', function (req, res) {
+  if (req.user) {
+    res.send(req.user.profile.id)
+  } else {
+    res.redirect('/auth/login')
   }
-);
+})
 
-//google log out
-app.get('/logout', (req, res) => {
-    req.logout();
-    req.session = null; //delete the set cookie
-    res.redirect('/');
-});
-//------------google oauth end------------//
+var question = dummy[0]
+question.incorrect_answers.push(question.correct_answer)
+question.incorrect_answers = _.shuffle(question.incorrect_answers);
 
-app.get('/api/currentUser', (req, res) => {
-  res.send(req.user);
-});
-//get request for user info (includes email, global score, and score for each attempted quiz)-  this is for rendering scores on leaderboard
-app.get('/home/leaderboard', function(req, res) {
-  //fetch info from database
-  data.leaderboardScore(function(err, data) {
-    if (err) {
-      console.log('not working')
-      res.sendStatus(500);
-    } else {
-      console.log('get request is going through yay!')
-      res.send(data);
-    }
-  });
-});
 
-//get request for quizzes - this is for rendering quiz under a SPECIFIC TOPIC (currently not being used atm :| )
-app.get('/home/quizzes', function(req, res) {
-  //hardcoded first argument in returnQuiz (edit l8r if gonna use this get req in the future)
-  data.returnQuiz('dinosaur', function(err, data) {
-    if (err) {
-      res.sendStatus(500);
-    } else {
-      console.log('quiz information is fetched!');
-      res.send(data);
-    }
-  });
-});
+io.on('connection', socket => {
+  // console.log(socket.server.httpServer._connections, 'user connected')
+
+
+  let q1 = {
+    question: question.question,
+    options: question.incorrect_answers
+  }
+
+  socket.emit('q1', q1);
 
 
 
-app.use(passport.initialize());
-app.use(passport.session());
-//NOTE MAKE SURE TO CHANGE :EMAIL TO :GOOGLEID
-//patch req updates db single score along w the quiz name
-app.patch('/home/:googleId', function(req, res) {
-  console.log('oi');
 
-  //googleId is currently set to email (we have to change this because email doesn't exist in req info)
-  var googleId = req.params.googleId; //middleware?
+  socket.on('disconnect', () => {
+    console.log('user disconeccted')
+  })
 
-  //----coded example----//
-  var quizName = req.body.quizName;
-  var points = req.body.score;
-  //----harcoded example end----//
 
-  //use incrementScore func from db
-    //this saves local scores in user info as well as increasing the global score on leaderboard info
-  data.incrementScore(googleId, quizName, points, function(err, data) {
-    if (err) {
-      console.log('boo hoo, not working');
-    } else {
-      console.log('successfully saved scores!');
-    }
-  });
-});
+})
 
-app.listen(port, () => {
-  console.log(`YAY listening on port ${port}!!`);
-});
+server.listen(port, () => console.log(`Listening on port: ${port}`))
